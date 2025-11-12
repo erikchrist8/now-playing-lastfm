@@ -19,6 +19,7 @@ app.get('/', (req, res) => {
 
         const user = process.env.LASTFM_USER || '%%LASTFM_USER%%';
         const apiKey = process.env.LASTFM_API_KEY || '%%LASTFM_API_KEY%%';
+        const refreshIntervalMs = process.env.REFRESH_INTERVAL_MS || '%%REFRESH_INTERVAL_MS%%';
 
         if (!apiKey || apiKey.startsWith('%%')) {
             console.error("Configuration Error: LASTFM_API_KEY environment variable is not set.");
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
         // Replace placeholders in the HTML
         let html = data.replace(/%%LASTFM_USER%%/g, user);
         html = html.replace(/%%LASTFM_API_KEY%%/g, apiKey);
+        html = html.replace(/%%REFRESH_INTERVAL_MS%%/g, refreshIntervalMs);
 
         // Send the modified HTML
         res.send(html);
@@ -42,4 +44,5 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Last.fm app listening on http://localhost:${port}`);
     console.log(`Serving data for user: ${process.env.LASTFM_USER || '(default)'}`);
+    console.log(`Refresh interval: ${process.env.REFRESH_INTERVAL_MS || '(default)'} ms`);
 });
