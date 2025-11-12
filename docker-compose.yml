@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  lastfm-app:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    
+    # Set a name for the container
+    container_name: lastfm-display
+    
+    # Map port 3000 on your host machine to port 3000 in the container
+    ports:
+      - "3000:3000"
+      
+    # Pass in the environment variables
+    environment:
+      - LASTFM_USER=your-lastfm-username
+      - LASTFM_API_KEY=your-lastfm-api-key
+      
+    # Restart the container automatically if it fails
+    restart: unless-stopped
