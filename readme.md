@@ -6,6 +6,8 @@ It is designed to be deployed as a Docker container, where the `LASTFM_USER` and
 
 The frontend is a clean, single-page view that automatically refreshes its data.
 
+![now playing screenshot](now-playing.png)
+
 ## Features
 
 * **Now Playing:** Displays the user's currently scrobbling track, including album art, title, artist, and album.
