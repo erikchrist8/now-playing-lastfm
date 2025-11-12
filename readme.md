@@ -39,6 +39,7 @@ Set last.fm username and API key in `docker-compose.yml`
 environment:
     - LASTFM_USER=your-lastfm-username
     - LASTFM_API_KEY=your-lastfm-api-key
+    - REFRESH_INTERVAL_MS=15000
 ```
 
 ## Running the App

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const config = document.body.dataset;
     const API_KEY = config.apiKey;
     const USER = config.user;
+    const REFRESH_INTERVAL_MS = config.refreshIntervalMs || 15000;
     
     // Check if config was loaded
     if (!API_KEY || API_KEY.startsWith('%%')) {
@@ -13,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const API_URL = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USER}&api_key=${API_KEY}&format=json&limit=10`;
-    const REFRESH_INTERVAL_MS = 15000;
-    // --- End Configuration ---
+
+    const originalPageTitle = document.title;
 
     // DOM elements
     const nowPlayingContainer = document.getElementById('now-playing');
@@ -48,15 +49,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tracks || tracks.length === 0) {
             nowPlayingContainer.innerHTML = `<p class="not-playing">No recent track data available for this user.</p>`;
             recentTracksList.innerHTML = '';
+            if (document.title !== originalPageTitle) {
+                document.title = originalPageTitle;
+            }
+
             return;
         }
         
         const nowPlayingTrack = tracks.find(track => track['@attr'] && track['@attr'].nowplaying === 'true');
         
         if (nowPlayingTrack) {
+            const trackTitle = nowPlayingTrack.name;
+            const trackArtist = nowPlayingTrack.artist['#text'];
+            const newPageTitle = `${trackTitle} - ${trackArtist}`;
+            if (document.title !== newPageTitle) {
+                document.title = newPageTitle;
+            }
             nowPlayingContainer.innerHTML = createTrackHTML(nowPlayingTrack, true);
             nowPlayingContainer.classList.add('now-playing-card');
         } else {
+            if (document.title !== originalPageTitle) {
+                document.title = originalPageTitle;
+            }
             nowPlayingContainer.innerHTML = `<p class="not-playing">Not playing anything right now.</p>`;
             nowPlayingContainer.classList.remove('now-playing-card');
         }
@@ -79,18 +93,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createTrackHTML(track, isNowPlaying) {
+    
+        const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ccc"%3E%3Cpath d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/%3E%3C/svg%3E';
+        
         const imageSize = isNowPlaying ? 'extralarge' : 'large';
         const image = track.image.find(img => img.size === imageSize) || track.image[track.image.length - 1];
-        const imageUrl = (image && image['#text']) ? image['#text'] : 'https://via.placeholder.com/300?text=No+Art';
+        const hasImage = (image && image['#text']);
+        const imageUrl = hasImage ? image['#text'] : placeholderSvg;
+        const imageClass = hasImage ? 'album-art' : 'album-art is-placeholder';
+        
         const trackUrl = track.url;
         const title = track.name;
         const artist = track.artist['#text'];
         const album = track.album['#text'];
         const nowPlayingLabel = isNowPlaying ? '<span class="now-playing-label">Now Playing</span>' : '';
-        const dateText = (!isNowPlaying && track.date) ? `<p class="track-date">Scrobbled: ${track.date['#text']}</p>` : '';
+        let dateText = '';
+        if (!isNowPlaying && track.date && track.date.uts) {
+
+            const timestampInMs = Number(track.date.uts) * 1000;
+            const scrobbleDate = new Date(timestampInMs);
+            const formattedDate = scrobbleDate.toLocaleString(undefined, { 
+                dateStyle: 'medium', 
+                timeStyle: 'short' 
+            });
+            
+            dateText = `<p class="track-date">Scrobbled: ${formattedDate}</p>`;
+        }
 
         return `
-            <img src="${imageUrl}" alt="Album art for ${album}" class="album-art">
+            <img src="${imageUrl}" alt="Album art for ${album}" class="${imageClass}">
             <div class="track-info">
                 ${nowPlayingLabel}
                 <a href="${trackUrl}" target="_blank" class="track-title">${title}</a>
